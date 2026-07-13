@@ -472,6 +472,20 @@ class BackupManager:
                 if local_uuid and metadata.get("database_uuid") and local_uuid != metadata.get("database_uuid"):
                     raise RuntimeError("Backup database UUID does not match the current local database UUID.")
 
+    def _create_sqlite_backup(self, source: Path, destination: Path) -> None:
+        if destination.exists():
+            destination.unlink(missing_ok=True)
+        _ensure_directory(destination.parent)
+        source_conn = sqlite3.connect(source)
+        try:
+            dest_conn = sqlite3.connect(destination)
+            try:
+                source_conn.backup(dest_conn)
+            finally:
+                dest_conn.close()
+        finally:
+            source_conn.close()
+
     def _apply_restored_state(self, metadata: dict[str, Any]) -> None:
         state = {
             "database_uuid": metadata.get("database_uuid", self.database_uuid),
@@ -583,7 +597,7 @@ class BackupManager:
                 backup_name = f"movie_manager_{self.generation}_{_utc_timestamp()}.sqlite3"
                 temp_backup_path = self.backup_temp_dir / backup_name
                 _ensure_directory(temp_backup_path.parent)
-                shutil.copy2(self.database_path, temp_backup_path)
+                self._create_sqlite_backup(self.database_path, temp_backup_path)
                 backup_created_at = _utc_iso()
                 sqlite_metadata = {
                     "database_uuid": self.database_uuid,
