@@ -189,7 +189,12 @@ class BackupManager:
             self.last_restore_time = _utc_iso()
             self.last_restore_message = message
 
-    def _log(self, message: str) -> None:
+    def _log(self, message: str, *args: object) -> None:
+        if args:
+            try:
+                message = message % args
+            except Exception:
+                message = f"{message} {args}"
         timestamp = _utc_iso()
         log_line = f"[{timestamp}] {message}\n"
         try:
