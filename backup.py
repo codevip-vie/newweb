@@ -282,6 +282,18 @@ class BackupManager:
                     return False
 
                 local_db_valid = self.database_path.exists() and self._validate_sqlite(self.database_path, require_tables=True)
+                local_generation = self.generation
+                local_sqlite_metadata = None
+                if local_db_valid:
+                    local_sqlite_metadata = self._read_sqlite_metadata(self.database_path)
+                    if local_sqlite_metadata is not None:
+                        try:
+                            local_generation = int(local_sqlite_metadata.get("generation", local_generation))
+                        except (TypeError, ValueError):
+                            pass
+                        if local_generation != self.generation:
+                            self.generation = local_generation
+
                 cloud_generation = None
                 try:
                     cloud_generation = int(latest_metadata.get("database_generation", 0))
@@ -289,11 +301,12 @@ class BackupManager:
                     cloud_generation = None
 
                 self._log(
-                    "Restore metadata: cloud_generation=%s, cloud_db_uuid=%s, local_exists=%s, local_valid=%s, local_generation=%s",
+                    "Restore metadata: cloud_generation=%s, cloud_db_uuid=%s, local_exists=%s, local_valid=%s, local_generation=%s, state_generation=%s",
                     cloud_generation,
                     latest_metadata.get("database_uuid"),
                     self.database_path.exists(),
                     local_db_valid,
+                    local_generation,
                     self.generation,
                 )
 
@@ -302,11 +315,11 @@ class BackupManager:
                     self._log("Restore skipped: cloud backup generation unknown.")
                     return False
 
-                if local_db_valid and self.generation >= cloud_generation:
+                if local_db_valid and local_generation >= cloud_generation:
                     self._set_status("restore", "skipped", "Database already exists and is valid; restore is not required.")
                     self._log(
                         "Restore skipped: local database is valid and up to date (local=%s, cloud=%s).",
-                        self.generation,
+                        local_generation,
                         cloud_generation,
                     )
                     return False
@@ -314,7 +327,7 @@ class BackupManager:
                 if local_db_valid:
                     self._log(
                         "Local database is valid but out of date (local=%s, cloud=%s); restoring latest cloud backup.",
-                        self.generation,
+                        local_generation,
                         cloud_generation,
                     )
                 elif self.database_path.exists():
