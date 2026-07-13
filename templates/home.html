@@ -23,7 +23,7 @@
                         <span class="eyebrow">Poster</span>
                         <h1>{{ poster.title }}</h1>
                         <p>{{ poster.description }}</p>
-                        <a class="button primary" href="{{ url_for('main.poster_detail', poster_id=poster.id) }}">View Details</a>
+                        <a class="button primary" href="{{ url_for('main.poster_detail', poster_id=poster.id) }}">Xem</a>
                     </div>
                 </article>
             {% endfor %}
@@ -67,7 +67,7 @@
                             <div class="media-card-body">
                                 <h3>{{ poster.title }}</h3>
                                 <p>{{ poster.description }}</p>
-                                <a class="button secondary" href="{{ url_for('main.poster_detail', poster_id=poster.id) }}">View Details</a>
+                                <a class="button secondary" href="{{ url_for('main.poster_detail', poster_id=poster.id) }}">Xem</a>
                             </div>
                         </article>
                     {% endfor %}
