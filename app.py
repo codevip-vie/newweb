@@ -26,15 +26,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.config.from_object(config_class)
 
     ensure_upload_dirs(app.config)
-    init_engine(
-        app.config["SQLALCHEMY_DATABASE_URI"],
-        app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
-    )
     storage_manager.initialize(app.config["GOOGLE_DRIVE_ACCOUNTS"])
 
     backup_manager = BackupManager(app)
     app.backup_manager = backup_manager
+    # Restore from cloud backup before SQLAlchemy opens the local database.
     backup_manager.perform_startup_restore()
+
+    init_engine(
+        app.config["SQLALCHEMY_DATABASE_URI"],
+        app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
+    )
     init_db()
     backup_manager.start_backup_thread()
 
