@@ -288,16 +288,39 @@ class BackupManager:
                 except (TypeError, ValueError):
                     cloud_generation = None
 
-                if local_db_valid:
-                    if cloud_generation is None or self.generation >= cloud_generation:
-                        self._set_status("restore", "skipped", "Database already exists and is valid; restore is not required.")
-                        self._log("Restore skipped: local database is valid and up to date.")
-                        return False
+                self._log(
+                    "Restore metadata: cloud_generation=%s, cloud_db_uuid=%s, local_exists=%s, local_valid=%s, local_generation=%s",
+                    cloud_generation,
+                    latest_metadata.get("database_uuid"),
+                    self.database_path.exists(),
+                    local_db_valid,
+                    self.generation,
+                )
+
+                if cloud_generation is None:
+                    self._set_status("restore", "skipped", "Cloud backup generation unknown; restore skipped.")
+                    self._log("Restore skipped: cloud backup generation unknown.")
+                    return False
+
+                if local_db_valid and self.generation >= cloud_generation:
+                    self._set_status("restore", "skipped", "Database already exists and is valid; restore is not required.")
                     self._log(
-                        f"Local database is valid but out of date (local={self.generation}, cloud={cloud_generation}); restoring latest cloud backup."
+                        "Restore skipped: local database is valid and up to date (local=%s, cloud=%s).",
+                        self.generation,
+                        cloud_generation,
+                    )
+                    return False
+
+                if local_db_valid:
+                    self._log(
+                        "Local database is valid but out of date (local=%s, cloud=%s); restoring latest cloud backup.",
+                        self.generation,
+                        cloud_generation,
                     )
                 elif self.database_path.exists():
                     self._log("Existing database is invalid or incomplete; attempting restore from latest cloud backup.")
+                else:
+                    self._log("No local database found; restoring latest cloud backup.")
 
                 self._restore_backup(latest_metadata, ids)
                 self._set_status("restore", "success", "Restore completed from the latest backup.")
@@ -406,9 +429,13 @@ class BackupManager:
     def _validate_restore_metadata(self, metadata: dict[str, Any]) -> None:
         if metadata.get("schema_version") != SCHEMA_VERSION:
             raise RuntimeError("Backup schema version does not match application schema.")
+
         if self.database_path.exists() and self._validate_sqlite(self.database_path, require_tables=True):
-            if metadata.get("database_uuid") != self.database_uuid:
-                raise RuntimeError("Backup database UUID does not match the current database UUID.")
+            local_metadata = self._read_sqlite_metadata(self.database_path)
+            if local_metadata is not None:
+                local_uuid = local_metadata.get("database_uuid")
+                if local_uuid and metadata.get("database_uuid") and local_uuid != metadata.get("database_uuid"):
+                    raise RuntimeError("Backup database UUID does not match the current local database UUID.")
 
     def _apply_restored_state(self, metadata: dict[str, Any]) -> None:
         state = {
