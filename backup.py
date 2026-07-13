@@ -266,18 +266,12 @@ class BackupManager:
             self._log("Restore skipped: system folder ID is not configured.")
             return False
 
-        if self.database_path.exists() and self._validate_sqlite(self.database_path, require_tables=True):
-            self._set_status("restore", "skipped", "Database already exists and is valid; restore is not required.")
-            return False
-
         with self._operation_lock:
             if not self._begin_operation("RESTORING"):
                 return False
             try:
                 self._log("Restore started.")
                 ids = self._ensure_system_folders()
-                if self.database_path.exists():
-                    self._log("Existing database is invalid or incomplete; attempting restore from latest cloud backup.")
                 latest_metadata = self._load_remote_latest(ids["metadata_folder_id"])
                 if latest_metadata is None:
                     self._log("latest.json unavailable; attempting metadata recovery from backup files.")
@@ -286,6 +280,25 @@ class BackupManager:
                     self._set_status("restore", "skipped", "No recoverable backup metadata was found.")
                     self._log("Restore skipped: no recoverable latest metadata.")
                     return False
+
+                local_db_valid = self.database_path.exists() and self._validate_sqlite(self.database_path, require_tables=True)
+                cloud_generation = None
+                try:
+                    cloud_generation = int(latest_metadata.get("database_generation", 0))
+                except (TypeError, ValueError):
+                    cloud_generation = None
+
+                if local_db_valid:
+                    if cloud_generation is None or self.generation >= cloud_generation:
+                        self._set_status("restore", "skipped", "Database already exists and is valid; restore is not required.")
+                        self._log("Restore skipped: local database is valid and up to date.")
+                        return False
+                    self._log(
+                        f"Local database is valid but out of date (local={self.generation}, cloud={cloud_generation}); restoring latest cloud backup."
+                    )
+                elif self.database_path.exists():
+                    self._log("Existing database is invalid or incomplete; attempting restore from latest cloud backup.")
+
                 self._restore_backup(latest_metadata, ids)
                 self._set_status("restore", "success", "Restore completed from the latest backup.")
                 self._log("Restore completed.")
@@ -474,6 +487,7 @@ class BackupManager:
                 return False
             if not self._begin_operation("RUNNING"):
                 return False
+            temp_backup_path = None
             try:
                 ids = self._ensure_system_folders()
                 database_folder_id = ids["database_folder_id"]
@@ -538,7 +552,7 @@ class BackupManager:
                 self._log(f"Backup failed: {exc}")
                 return False
             finally:
-                if temp_backup_path.exists():
+                if temp_backup_path is not None and temp_backup_path.exists():
                     try:
                         temp_backup_path.unlink()
                     except Exception:
