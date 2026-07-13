@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}Schedule - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell feature-page">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Schedule</span>
+            <h1>Timetable</h1>
+            <p>Plan your week with colorful schedule entries and quick actions.</p>
+        </div>
+    </div>
+
+    {{ error_list(errors) }}
+
+    <div class="feature-grid timetable-grid">
+        <article class="feature-panel">
+            <div class="panel-header">
+                <h2>New schedule entry</h2>
+                <p>Add work, study, or event slots to your timetable.</p>
+            </div>
+            <form class="editor-form" method="post" novalidate>
+                {{ csrf_field() }}
+                <label for="title">Title</label>
+                <input id="title" name="title" type="text" placeholder="Entry title" required>
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3" placeholder="Entry details"></textarea>
+                <div class="form-grid">
+                    <div>
+                        <label for="start_time">Start time</label>
+                        <input id="start_time" name="start_time" type="datetime-local" required>
+                    </div>
+                    <div>
+                        <label for="end_time">End time</label>
+                        <input id="end_time" name="end_time" type="datetime-local" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <label for="entry_type">Type</label>
+                        <select id="entry_type" name="entry_type">
+                            <option>Work</option>
+                            <option>Study</option>
+                            <option>Personal</option>
+                            <option>Meeting</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="color">Color</label>
+                        <input id="color" name="color" type="color" value="#7C3AED">
+                    </div>
+                </div>
+                <label class="checkbox-label"><input type="checkbox" name="repeat_weekly"> Repeat weekly</label>
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('main.dashboard') }}">Back</a>
+                    <button class="button primary" type="submit">Add entry</button>
+                </div>
+            </form>
+        </article>
+
+        <article class="feature-panel timetable-panel">
+            <div class="panel-header">
+                <h2>Your timetable</h2>
+                <p>Review scheduled entries and remove items after completion.</p>
+            </div>
+            {% if entries %}
+                <div class="entry-grid">
+                    {% for entry in entries %}
+                        <article class="timetable-card" style="border-left-color: {{ entry.color }};">
+                            <div class="timetable-card-header">
+                                <strong>{{ entry.title }}</strong>
+                                <span>{{ entry.entry_type }}</span>
+                            </div>
+                            <p>{{ entry.description or 'No description provided.' }}</p>
+                            <div class="timetable-meta">
+                                <span>{{ entry.start_time.strftime('%b %d, %H:%M') }} – {{ entry.end_time.strftime('%H:%M') }}</span>
+                                {% if entry.repeat_weekly %}<span>Repeats weekly</span>{% endif %}
+                            </div>
+                            <form method="post" action="{{ url_for('features.timetable_delete', entry_id=entry.id) }}" data-confirm="Remove this schedule entry?">
+                                {{ csrf_field() }}
+                                <button class="button danger" type="submit">Delete</button>
+                            </form>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">No timetable entries yet.</div>
+            {% endif %}
+        </article>
+    </div>
+</section>
+{% endblock %}

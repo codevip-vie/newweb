@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}Profile - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="form-shell">
+    <div class="page-heading">
+        <span class="eyebrow">Profile</span>
+        <h1>Account Settings</h1>
+    </div>
+    {{ error_list(errors) }}
+    <form class="editor-form" method="post" novalidate>
+        {{ csrf_field() }}
+        <div class="form-grid">
+            <div>
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" value="{{ values.username }}" minlength="3" maxlength="30" required>
+            </div>
+            <div>
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" value="{{ values.email }}" required>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-grid">
+            <div>
+                <label for="current_password">Current password</label>
+                <input id="current_password" name="current_password" type="password" autocomplete="current-password">
+            </div>
+            <div>
+                <label for="new_password">New password</label>
+                <input id="new_password" name="new_password" type="password" minlength="8" autocomplete="new-password">
+            </div>
+            <div>
+                <label for="confirm_password">Confirm new password</label>
+                <input id="confirm_password" name="confirm_password" type="password" minlength="8" autocomplete="new-password">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a class="button secondary" href="{{ url_for('main.dashboard') }}">Cancel</a>
+            <button class="button primary" type="submit">Save Profile</button>
+        </div>
+    </form>
+    {% if not current_user.is_admin_role %}
+        <div class="section-divider"></div>
+        <section class="danger-zone">
+            <h2>Danger zone</h2>
+            <p>Deleting your account will remove all of your posters and movies permanently.</p>
+            <form method="post" action="{{ url_for('main.delete_account') }}" data-confirm="Delete your account? This cannot be undone.">
+                {{ csrf_field() }}
+                <button class="button danger" type="submit">Delete Account</button>
+            </form>
+        </section>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="error-shell">
+    <span class="eyebrow">Error</span>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <a class="button primary" href="{{ url_for('main.home') }}">Return Home</a>
+</section>
+{% endblock %}

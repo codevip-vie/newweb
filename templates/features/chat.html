@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}Chat - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell feature-page">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Chat</span>
+            <h1>Conversation hub</h1>
+            <p>Send messages, attach files, and keep track of unread conversations.</p>
+        </div>
+    </div>
+
+    <div class="conversation-shell chat-shell">
+        <aside class="sidebar-panel chat-sidebar">
+            <div class="panel-header">
+                <h2>Friends</h2>
+                <p>Select a friend to open a chat.</p>
+            </div>
+            {% if friends %}
+                <ul class="friend-list">
+                    {% for friend in friends %}
+                        <li class="friend-item {% if active_peer and friend.id == active_peer.id %}active{% endif %}">
+                            <a href="{{ url_for('features.chat_conversation', peer_id=friend.id) }}">
+                                <span>{{ friend.username }}</span>
+                                {% if unread_counts[friend.id] %}
+                                    <span class="status-pill">{{ unread_counts[friend.id] }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">Add friends first to start chatting.</div>
+            {% endif %}
+        </aside>
+
+        <section class="feature-panel chat-panel"{% if active_peer %} data-chat-peer-id="{{ active_peer.id }}" data-chat-poll-url="{{ url_for('features.chat_poll', peer_id=active_peer.id) }}" data-chat-last-updated="{{ last_message.created_at.isoformat() if last_message else '' }}" data-chat-last-message-id="{{ last_message.id if last_message else '' }}"{% endif %}>
+            {% if active_peer %}
+                <div class="panel-header">
+                    <h2>{{ active_peer.username }}</h2>
+                    <p>Live conversation with your friend.</p>
+                </div>
+                <div class="message-stream">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <article class="message-bubble {% if message.sender_id == current_user.id %}message-outgoing{% else %}message-incoming{% endif %}">
+                                {% if message.body %}
+                                    <p>{{ message.body }}</p>
+                                {% endif %}
+                                {% if message.attachment_original_name %}
+                                    <div class="message-attachment">Attachment: {{ message.attachment_original_name }}</div>
+                                {% endif %}
+                                <small>{{ message.created_at.strftime('%b %d · %H:%M') }}</small>
+                            </article>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">No messages yet. Send the first note.</div>
+                    {% endif %}
+                </div>
+
+                <form class="editor-form message-form chat-composer" method="post" enctype="multipart/form-data" novalidate>
+                    {{ csrf_field() }}
+                    <div class="chat-composer-inner">
+                        <textarea id="body" name="body" rows="2" placeholder="Write a message..."></textarea>
+                        <input id="attachment" name="attachment" type="file" hidden>
+                        <label class="upload-pill" for="attachment" title="Add attachment">+</label>
+                        <button class="button primary send-btn" type="submit">Send</button>
+                    </div>
+                    <div class="form-actions chat-actions">
+                        <a class="button secondary" href="{{ url_for('features.chat') }}">Back</a>
+                    </div>
+                </form>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var chatPanel = document.querySelector('.chat-panel[data-chat-peer-id]');
+                        if (!chatPanel) {
+                            return;
+                        }
+
+                        var pollUrl = chatPanel.getAttribute('data-chat-poll-url');
+                        var lastMessageId = Number(chatPanel.getAttribute('data-chat-last-message-id')) || null;
+                        var lastUpdated = chatPanel.getAttribute('data-chat-last-updated');
+                        var currentUserId = {{ current_user.id | tojson }};
+
+                        function pollChat() {
+                            fetch(pollUrl, {
+                                cache: 'no-store',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            })
+                                .then(function (response) {
+                                    return response.ok ? response.json() : Promise.reject();
+                                })
+                                .then(function (data) {
+                                    if (!data.last_message_id) {
+                                        return;
+                                    }
+
+                                    var incomingMessageId = Number(data.last_message_id);
+                                    if (data.sender_id === currentUserId) {
+                                        lastMessageId = incomingMessageId;
+                                        lastUpdated = data.updated_at;
+                                        return;
+                                    }
+
+                                    if (!lastMessageId || incomingMessageId !== lastMessageId) {
+                                        window.location.reload();
+                                        return;
+                                    }
+
+                                    lastUpdated = data.updated_at;
+                                })
+                                .catch(function () {
+                                    // Ignore transient errors and retry on next interval.
+                                });
+                        }
+
+                        pollChat();
+                        setInterval(pollChat, 2000);
+                    });
+                </script>
+            {% else %}
+                <div class="empty-state chat-empty">
+                    <h2>Select a friend to open a conversation.</h2>
+                    <p>Chats will appear here once a friend is selected.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}

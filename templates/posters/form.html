@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}{{ action }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="form-shell">
+    <div class="page-heading">
+        <span class="eyebrow">[QUẢN LÝ POSTERS]</span>
+        <h1>{{ action }}</h1>
+    </div>
+    {{ error_list(errors) }}
+    <form class="editor-form" method="post" enctype="multipart/form-data" novalidate>
+        {{ csrf_field() }}
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" value="{{ values.title }}" maxlength="140" required>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="6" maxlength="1200" required>{{ values.description }}</textarea>
+
+        <label for="image">Image</label>
+        <input id="image" name="image" type="file" accept="image/png,image/jpeg" {% if not poster %}required{% endif %} data-preview-target="poster-preview">
+        <p class="input-help">PNG or JPEG, up to 8 MB.</p>
+
+        <div class="preview-panel">
+            <img id="poster-preview" src="{% if poster %}{{ poster_image_url(poster) }}{% endif %}" alt="Poster preview" {% if not poster %}hidden{% endif %}>
+        </div>
+
+        <div class="form-actions">
+            <a class="button secondary" href="{{ url_for('posters.index') }}">Cancel</a>
+            <button class="button primary" type="submit">{{ action }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

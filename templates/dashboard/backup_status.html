@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}Backup status - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell dashboard-workspace">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">System</span>
+            <h1>Backup and restore status</h1>
+            <p>Monitor the latest backup and restore results for the app database.</p>
+        </div>
+        <form class="action-row" method="post" action="{{ url_for('main.backup_trigger') }}">
+            {{ csrf_field() }}
+            <button class="button primary" type="submit">Run backup now</button>
+        </form>
+    </div>
+
+    <div class="workspace-section split-grid">
+        <div class="panel-shell status-panel">
+            <div class="section-heading compact">
+                <span class="eyebrow">Backup</span>
+                <h2>Latest backup</h2>
+            </div>
+            <dl class="status-list">
+                <dt>Status</dt>
+                <dd>
+                    {% if backup_status.last_backup_status == 'success' %}
+                        ✅ {{ backup_status.last_backup_status | capitalize }}
+                    {% elif backup_status.last_backup_status == 'fail' %}
+                        ❌ {{ backup_status.last_backup_status | capitalize }}
+                    {% else %}
+                        ⚠️ {{ backup_status.last_backup_status | capitalize }}
+                    {% endif %}
+                </dd>
+                <dt>Time</dt>
+                <dd>{{ backup_status.last_backup_time or 'Not available' }}</dd>
+                <dt>Message</dt>
+                <dd>{{ backup_status.last_backup_message }}</dd>
+            </dl>
+        </div>
+        <div class="panel-shell status-panel">
+            <div class="section-heading compact">
+                <span class="eyebrow">Restore</span>
+                <h2>Latest restore</h2>
+            </div>
+            <dl class="status-list">
+                <dt>Status</dt>
+                <dd>
+                    {% if backup_status.last_restore_status == 'success' %}
+                        ✅ {{ backup_status.last_restore_status | capitalize }}
+                    {% elif backup_status.last_restore_status == 'fail' %}
+                        ❌ {{ backup_status.last_restore_status | capitalize }}
+                    {% else %}
+                        ⚠️ {{ backup_status.last_restore_status | capitalize }}
+                    {% endif %}
+                </dd>
+                <dt>Time</dt>
+                <dd>{{ backup_status.last_restore_time or 'Not available' }}</dd>
+                <dt>Message</dt>
+                <dd>{{ backup_status.last_restore_message }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="workspace-section">
+        <div class="panel-shell">
+            <div class="section-heading compact">
+                <span class="eyebrow">Notes</span>
+                <h2>Reserve account 0</h2>
+            </div>
+            <p>Account 0 is reserved for system backups and restore operations only. Normal uploads use round-robin accounts starting from account 1.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

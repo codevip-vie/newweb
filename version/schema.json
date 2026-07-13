@@ -1,0 +1,5 @@
+{
+  "database": "sqlite",
+  "schema_version": 1,
+  "application": "1.0.0"
+}

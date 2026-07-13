@@ -1,0 +1,22 @@
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-authors">
+            {% for person in authors %}
+                <div class="footer-author">
+                    <img src="{{ person.image }}" alt="{{ person.name }} portrait">
+                    <div>
+                        <strong>{{ person.name }}</strong>
+                        <span>{{ person.role }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% if current_user.is_authenticated and current_user.is_admin_role %}
+            <div class="footer-admin-actions">
+                <a class="button secondary small" href="{{ url_for('main.founders') }}">Chỉnh sửa nhà sáng lập</a>
+            </div>
+        {% endif %}
+        <p>{{ site_name }} Web is designed and build by LeGiaHuy.</p>
+        <small>&copy; Nguyen-Le-Quynh-Anh</small>
+    </div>
+</footer>

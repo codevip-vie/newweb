@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}Founder Profiles - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="manager-shell">
+    <div class="manager-heading">
+        <div>
+            <span class="eyebrow">Founder Profiles</span>
+            <h1>Founder Profiles</h1>
+        </div>
+        <a class="button secondary" href="{{ url_for('main.dashboard') }}">Back to Dashboard</a>
+    </div>
+
+    {% if founders %}
+        <div class="founder-grid">
+            {% for founder in founders %}
+                <article class="founder-card">
+                    <div class="founder-media">
+                        <img src="{{ founder.image or url_for('static', filename='img/author.svg') }}" alt="{{ founder.name }} portrait">
+                    </div>
+                    <div class="founder-body">
+                        <strong>{{ founder.name }}</strong>
+                        <span>{{ founder.role }}</span>
+                        <p>{{ founder.bio }}</p>
+                        <form class="founder-form" method="post" action="{{ url_for('main.update_founder', founder_id=founder.id) }}" enctype="multipart/form-data" novalidate>
+                            {{ csrf_field() }}
+                            <label for="bio-{{ founder.id }}">Edit description</label>
+                            <textarea id="bio-{{ founder.id }}" name="bio" rows="4" required>{{ founder.bio }}</textarea>
+                            <label for="image-{{ founder.id }}">Upload avatar</label>
+                            <input id="image-{{ founder.id }}" name="image" type="file" accept="image/*">
+                            <div class="form-actions">
+                                <button class="button primary" type="submit">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No founder profiles available.</div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{
+  "database_uuid": "f1fd192b635b474088a4beb18e262ebd",
+  "database_generation": 9,
+  "backup_file_id": "1f5XzwAiP1CC7ee0nepcD7yGEUotuq91X",
+  "backup_filename": "movie_manager_9_20260713_161825.sqlite3",
+  "sha256": "471ec6def50e7a1e137408f9e8e937e5906f1b8e158e4e8bcbf683e7af49244c",
+  "schema_version": 1,
+  "application_version": "1.0.0",
+  "backup_created_at": "2026-07-13T16:18:30Z",
+  "device_id": "adc19faefd8340b5bbdb68ff688efc11",
+  "environment_type": "local-development",
+  "database_size": 200704
+}

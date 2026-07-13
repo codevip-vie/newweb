@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Google OAuth token
+instance/google_drive_oauth*.json
+
+# Database
+instance/*.sqlite3
+instance/*.sqlite3-*
+
+# Uploads
+instance/uploads/*
+!instance/uploads/.gitkeep
+!instance/uploads/posters/.gitkeep
+!instance/uploads/movie_covers/.gitkeep
+!instance/uploads/movie_videos/.gitkeep

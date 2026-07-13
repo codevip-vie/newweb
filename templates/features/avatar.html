@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}Avatar Library - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell feature-page">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Avatar</span>
+            <h1>Avatar Library</h1>
+            <p>Upload, preview, and refresh your profile avatar in a clean workspace.</p>
+        </div>
+    </div>
+
+    <div class="feature-grid avatar-grid">
+        <article class="feature-panel avatar-panel">
+            <div class="panel-header">
+                <h2>Current avatar</h2>
+                <p>Preview your most recent avatar upload.</p>
+            </div>
+            <div class="avatar-preview-shell">
+                {% if avatar_url %}
+                    <img class="avatar-preview" src="{{ avatar_url }}" alt="Profile avatar">
+                {% else %}
+                    <div class="avatar-placeholder">No avatar installed yet</div>
+                {% endif %}
+            </div>
+        </article>
+
+        <article class="feature-panel">
+            <div class="panel-header">
+                <h2>Upload a new avatar</h2>
+                <p>Choose an image to update your profile avatar instantly.</p>
+            </div>
+            {{ error_list(errors) }}
+            <form class="editor-form" method="post" enctype="multipart/form-data" novalidate>
+                {{ csrf_field() }}
+                <label for="avatar">Select avatar image</label>
+                <input id="avatar" name="avatar" type="file" accept="image/*" required>
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('main.dashboard') }}">Back</a>
+                    <button class="button primary" type="submit">Upload Avatar</button>
+                </div>
+            </form>
+        </article>
+    </div>
+</section>
+{% endblock %}

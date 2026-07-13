@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}Dashboard - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell dashboard-workspace">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Workspace</span>
+            <h1>Welcome back, {{ current_user.username }}</h1>
+            <p>Everything you need to manage posters, movies, and social features in one elegant workspace.</p>
+        </div>
+        <div class="dashboard-metrics">
+            <div class="metric-card">
+                <span>Posters</span>
+                <strong>{{ poster_count }}</strong>
+            </div>
+            <div class="metric-card">
+                <span>Movies</span>
+                <strong>{{ movie_count }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace-section">
+        <div class="section-heading">
+            <h2>Quick actions</h2>
+        </div>
+        <div class="workspace-grid">
+            <a class="quick-card" href="{{ url_for('features.todo') }}">
+                <strong>Task manager</strong>
+                <p>Create tasks, track progress, and stay organized.</p>
+            </a>
+            <a class="quick-card" href="{{ url_for('features.timetable') }}">
+                <strong>Schedule</strong>
+                <p>Keep your week organized with calendar events.</p>
+            </a>
+            <a class="quick-card" href="{{ url_for('features.timetable') }}">
+                <strong>Schedule</strong>
+                <p>Keep your week organized with calendar events.</p>
+            </a>
+            <a class="quick-card" href="{{ url_for('features.timetable') }}">
+                <strong>Schedule</strong>
+                <p>Plan your week with a timetable view.</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="workspace-section split-grid">
+        <div class="panel-shell">
+            <div class="section-heading compact">
+                <span class="eyebrow">Recent</span>
+                <h2>Posters</h2>
+            </div>
+            {% if latest_posters %}
+                <div class="compact-list">
+                    {% for poster in latest_posters %}
+                        <span>{{ poster.title }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">No posters yet.</div>
+            {% endif %}
+        </div>
+        <div class="panel-shell">
+            <div class="section-heading compact">
+                <span class="eyebrow">Recent</span>
+                <h2>Movies</h2>
+            </div>
+            {% if latest_movies %}
+                <div class="compact-list">
+                    {% for movie in latest_movies %}
+                        <span>{{ movie.title }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">No movies yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

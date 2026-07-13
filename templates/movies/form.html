@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}{{ action }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="form-shell">
+    <div class="page-heading">
+        <span class="eyebrow">[PHIM ĐANG CÓ]</span>
+        <h1>{{ action }}</h1>
+    </div>
+    {{ error_list(errors) }}
+    <div class="form-errors" data-form-errors hidden role="alert"></div>
+    <form class="editor-form" method="post" enctype="multipart/form-data" data-upload-progress novalidate>
+        {{ csrf_field() }}
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" value="{{ values.title }}" maxlength="140" required>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="7" maxlength="3000" required>{{ values.description }}</textarea>
+
+        <div class="form-grid">
+            <div>
+                <label for="cover">Cover image</label>
+                <input id="cover" name="cover" type="file" accept="image/png,image/jpeg" {% if not movie %}required{% endif %} data-preview-target="cover-preview">
+                <p class="input-help">PNG or JPEG, up to 8 MB.</p>
+            </div>
+            <div>
+                <label for="video">MP4 video</label>
+                <input id="video" name="video" type="file" accept="video/mp4" {% if not movie %}required{% endif %}>
+                <p class="input-help">MP4 only, up to 5 GB.</p>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <img id="cover-preview" src="{% if movie %}{{ movie_cover_url(movie) }}{% endif %}" alt="Cover preview" {% if not movie %}hidden{% endif %}>
+        </div>
+
+        <div class="progress-shell" data-progress-shell hidden>
+            <div class="progress-track">
+                <span data-progress-bar></span>
+            </div>
+            <p data-progress-label>Preparing upload...</p>
+        </div>
+
+        <div class="form-actions">
+            <a class="button secondary" href="{{ url_for('movies.index') }}">Cancel</a>
+            <button class="button primary" type="submit">{{ action }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

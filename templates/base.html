@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+</head>
+<body class="{% if current_user.is_authenticated %}authenticated{% endif %}">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="app-layout">
+        {% include "partials/header.html" %}
+        <div class="app-body">
+            {% if current_user.is_authenticated %}
+                <aside class="site-sidebar is-collapsed" aria-label="App navigation">
+                    <nav class="sidebar-nav">
+                        <a href="{{ url_for('main.home') }}" class="{% if request.endpoint == 'main.home' %}active{% endif %}">Home</a>
+                        <a href="{{ url_for('posters.index') }}" class="{% if request.endpoint == 'posters.index' %}active{% endif %}">Posters</a>
+                        <a href="{{ url_for('movies.index') }}" class="{% if request.endpoint == 'movies.index' %}active{% endif %}">Movies</a>
+                        {% if current_user.is_admin_role %}
+                            <a href="{{ url_for('main.users') }}" class="{% if request.endpoint == 'main.users' %}active{% endif %}">Users</a>
+                            <a href="{{ url_for('main.founders') }}" class="{% if request.endpoint == 'main.founders' %}active{% endif %}">Founders</a>
+                            <a href="{{ url_for('main.backup_status') }}" class="{% if request.endpoint == 'main.backup_status' %}active{% endif %}">Backup status</a>
+                        {% endif %}
+                        <a href="{{ url_for('main.profile') }}" class="{% if request.endpoint == 'main.profile' %}active{% endif %}">Profile</a>
+                        <form class="nav-form" method="post" action="{{ url_for('auth.logout') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit">Log out</button>
+                        </form>
+                    </nav>
+                </aside>
+            {% endif %}
+            <div class="app-main">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <section class="flash-stack" aria-label="Notifications">
+                            {% for category, message in messages %}
+                                <div class="flash flash-{{ category }}" role="status">
+                                    <span>{{ message }}</span>
+                                    <button class="icon-button" type="button" data-dismiss-flash aria-label="Dismiss notification">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </section>
+                    {% endif %}
+                {% endwith %}
+                <main id="main-content">
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</body>
+</html>

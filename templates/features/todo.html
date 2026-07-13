@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}Tasks - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell feature-page">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Tasks</span>
+            <h1>Task manager</h1>
+            <p>Create tasks, track priorities, and organize your work in section boards.</p>
+        </div>
+    </div>
+
+    {{ error_list(errors) }}
+
+    <div class="feature-grid todo-grid">
+        <article class="feature-panel">
+            <div class="panel-header">
+                <h2>Create a task</h2>
+                <p>Add a new item to your personal task board.</p>
+            </div>
+            <form class="editor-form" method="post" novalidate>
+                {{ csrf_field() }}
+                <label for="title">Task title</label>
+                <input id="title" name="title" type="text" placeholder="Task title" required>
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4" placeholder="Task details"></textarea>
+                <div class="form-grid">
+                    <div>
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            <option>High</option>
+                            <option selected>Medium</option>
+                            <option>Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="due_date">Due date</label>
+                        <input id="due_date" name="due_date" type="date">
+                    </div>
+                </div>
+                <label for="labels">Labels</label>
+                <input id="labels" name="labels" type="text" placeholder="Add labels separated by commas">
+                <div class="form-actions">
+                    <a class="button secondary" href="{{ url_for('main.dashboard') }}">Cancel</a>
+                    <button class="button primary" type="submit">Create task</button>
+                </div>
+            </form>
+        </article>
+
+        <article class="feature-panel todo-panel">
+            <div class="panel-header">
+                <h2>Task board</h2>
+                <p>View tasks by section and mark completed items.</p>
+            </div>
+            <div class="task-board">
+                {% for section in sections %}
+                    <div class="task-section">
+                        <h3>{{ section.name }}</h3>
+                        {% set section_tasks = [] %}
+                        {% for task in tasks %}
+                            {% if task.section_id == section.id %}
+                                {% set section_tasks = section_tasks + [task] %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if section_tasks %}
+                            {% for task in section_tasks %}
+                                <article class="task-card {% if task.is_complete %}task-done{% endif %}">
+                                    <div>
+                                        <strong>{{ task.title }}</strong>
+                                        {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                                    </div>
+                                    <div class="task-meta">
+                                        <span>{{ task.priority }}</span>
+                                        {% if task.due_date %}<span>Due {{ task.due_date.strftime('%b %d') }}</span>{% endif %}
+                                        {% if task.labels %}<span>{{ task.labels }}</span>{% endif %}
+                                    </div>
+                                    <div class="task-actions">
+                                        <form method="post" action="{{ url_for('features.todo_toggle', task_id=task.id) }}">
+                                            {{ csrf_field() }}
+                                            <button class="button secondary" type="submit">{% if task.is_complete %}Reopen{% else %}Complete{% endif %}</button>
+                                        </form>
+                                        <form method="post" action="{{ url_for('features.todo_delete', task_id=task.id) }}" data-confirm="Delete this task?">
+                                            {{ csrf_field() }}
+                                            <button class="button danger" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">No tasks in this section.</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

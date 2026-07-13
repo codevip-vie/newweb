@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Google OAuth Status - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="section-heading">
+    <span class="eyebrow">OAuth Diagnostics</span>
+    <h1>Google Drive Account Status</h1>
+    <p>Review OAuth readiness for each configured Google Drive account without exposing secret values.</p>
+</section>
+
+<section class="table-section">
+    <table>
+        <thead>
+            <tr>
+                <th>Account index</th>
+                <th>OAuth configured</th>
+                <th>Refresh token available</th>
+                <th>Poster folder configured</th>
+                <th>Video folder configured</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in accounts %}
+                <tr>
+                    <td>{{ account.index }}</td>
+                    <td>{{ "Yes" if account.oauth_configured else "No" }}</td>
+                    <td>{{ "Yes" if account.refresh_token_available else "No" }}</td>
+                    <td>{{ "Yes" if account.posters_folder_configured else "No" }}</td>
+                    <td>{{ "Yes" if account.videos_folder_configured else "No" }}</td>
+                    <td>
+                        {% if account.oauth_configured %}
+                            <a class="button" href="{{ account.authorize_url }}">Authorize</a>
+                        {% else %}
+                            <span class="muted">Missing client credentials</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

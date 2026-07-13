@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Watch {{ movie.title }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="watch-shell">
+    <div class="watch-copy">
+        <span class="eyebrow">Now Playing</span>
+        <h1>{{ movie.title }}</h1>
+        <p>{{ movie.description }}</p>
+    </div>
+    <video class="movie-player" controls preload="metadata" poster="{{ movie_cover_url(movie) }}">
+        <source src="{{ url_for('media.movie_video', movie_id=movie.id) }}" type="video/mp4">
+        Your browser does not support the video element.
+    </video>
+    <div class="form-actions left">
+        <a class="button secondary" href="{{ url_for('main.home') }}">Back Home</a>
+    </div>
+</section>
+
+<section class="comments-shell">
+    <div class="comments-header">
+        <h2>Bình luận</h2>
+    </div>
+
+    {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('main.movie_comment', movie_id=movie.id) }}" class="comment-form">
+            <textarea name="body" rows="4" placeholder="Viết bình luận..." required></textarea>
+            <button type="submit" class="button primary">Gửi bình luận</button>
+        </form>
+    {% else %}
+        <p>Vui lòng <a href="{{ url_for('auth.login') }}">đăng nhập</a> để bình luận.</p>
+    {% endif %}
+
+    {% if movie.comments %}
+        <div class="comment-list">
+            {% for comment in movie.comments|sort(attribute='created_at', reverse=True) %}
+                <div class="comment-item">
+                    <div class="comment-meta">
+                        <strong>{{ comment.user.username }}</strong>
+                        <span>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <p>{{ comment.body }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Chưa có bình luận nào.</p>
+    {% endif %}
+</section>
+{% endblock %}

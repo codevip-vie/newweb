@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ poster.title }} - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="detail-shell">
+    <div class="detail-media">
+        <img src="{{ poster_image_url(poster) }}" alt="{{ poster.title }}">
+    </div>
+    <div class="detail-copy">
+        <span class="eyebrow">Poster Details</span>
+        <h1>{{ poster.title }}</h1>
+        <p>{{ poster.description }}</p>
+        <div class="detail-actions">
+            <a class="button primary" href="{{ url_for('media.poster_image_download', poster_id=poster.id) }}">Save img</a>
+            <a class="button secondary" href="{{ url_for('main.home') }}">Back Home</a>
+        </div>
+    </div>
+</section>
+
+<section class="comments-shell">
+    <div class="comments-header">
+        <h2>Bình luận</h2>
+    </div>
+
+    {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('main.poster_comment', poster_id=poster.id) }}" class="comment-form">
+            <textarea name="body" rows="4" placeholder="Viết bình luận..." required></textarea>
+            <button type="submit" class="button primary">Gửi bình luận</button>
+        </form>
+    {% else %}
+        <p>Vui lòng <a href="{{ url_for('auth.login') }}">đăng nhập</a> để bình luận.</p>
+    {% endif %}
+
+    {% if poster.comments %}
+        <div class="comment-list">
+            {% for comment in poster.comments|sort(attribute='created_at', reverse=True) %}
+                <div class="comment-item">
+                    <div class="comment-meta">
+                        <strong>{{ comment.user.username }}</strong>
+                        <span>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <p>{{ comment.body }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Chưa có bình luận nào.</p>
+    {% endif %}
+</section>
+{% endblock %}

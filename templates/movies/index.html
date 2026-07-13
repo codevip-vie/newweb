@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}[PHIM ĐANG CÓ] - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="manager-shell">
+    <div class="manager-heading">
+        <div>
+            <span class="eyebrow">[PHIM ĐANG CÓ]</span>
+            <h1>[PHIM ĐANG CÓ]</h1>
+        </div>
+        {% if current_user.is_authenticated and current_user.is_admin_role %}
+            <a class="button primary" href="{{ url_for('movies.create') }}">Upload Phim</a>
+        {% endif %}
+    </div>
+
+    <form class="search-bar" method="get">
+        <label class="sr-only" for="movie-search">Search movies</label>
+        <input id="movie-search" type="search" name="q" value="{{ q }}" placeholder="Search movies">
+        <button class="button secondary" type="submit">Search</button>
+    </form>
+
+    {% if movies %}
+        <div class="manager-grid">
+            {% for movie in movies %}
+                <article class="manager-card movie-manager-card">
+                    <img src="{{ movie_cover_url(movie) }}" alt="{{ movie.title }}">
+                    <div class="manager-card-body">
+                        <h2>{{ movie.title }}</h2>
+                        {% if current_user.is_admin_role and movie.user_id != current_user.id %}
+                            <div class="owner-label">Owner: {{ movie.owner.username }}</div>
+                        {% endif %}
+                        <p>{{ movie.description }}</p>
+                        <span class="file-meta">{{ (movie.video_size / 1024 / 1024)|round(2) }} MB</span>
+                        <div class="manager-actions">
+                            {% set owner_is_admin = movie.owner and movie.owner.username in admin_usernames %}
+                            <a class="button primary" href="{{ url_for('main.watch_movie', movie_id=movie.id) }}">Watch</a>
+                            {% if movie.user_id == current_user.id or (current_user.is_admin_role and not owner_is_admin) %}
+                                <form method="post" action="{{ url_for('movies.delete', movie_id=movie.id) }}" data-confirm="Delete this movie?">
+                                    {{ csrf_field() }}
+                                    <button class="button danger" type="submit">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No matching movies.</div>
+    {% endif %}
+</section>
+{% endblock %}

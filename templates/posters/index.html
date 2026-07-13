@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field %}
+
+{% block title %}[QUẢN LÝ POSTERS] - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="manager-shell">
+    <div class="manager-heading">
+        <div>
+            <span class="eyebrow">[QUẢN LÝ POSTERS]</span>
+            <h1>[QUẢN LÝ POSTERS]</h1>
+        </div>
+        {% if current_user.is_authenticated and current_user.is_admin_role %}
+            <a class="button primary" href="{{ url_for('posters.create') }}">Upload Posters</a>
+        {% endif %}
+    </div>
+
+    <form class="search-bar" method="get">
+        <label class="sr-only" for="poster-search">Search posters</label>
+        <input id="poster-search" type="search" name="q" value="{{ q }}" placeholder="Search posters">
+        <button class="button secondary" type="submit">Search</button>
+    </form>
+
+    {% if posters %}
+        <div class="manager-grid">
+            {% for poster in posters %}
+                <article class="manager-card">
+                    <img src="{{ poster_image_url(poster) }}" alt="{{ poster.title }}">
+                    <div class="manager-card-body">
+                        <h2>{{ poster.title }}</h2>
+                        {% if current_user.is_admin_role and poster.user_id != current_user.id %}
+                            <div class="owner-label">Owner: {{ poster.owner.username }}</div>
+                        {% endif %}
+                        <p>{{ poster.description }}</p>
+                        <div class="manager-actions">
+                            {% set owner_is_admin = poster.owner and poster.owner.username in admin_usernames %}
+                            <a class="button ghost" href="{{ url_for('main.poster_detail', poster_id=poster.id) }}">Preview</a>
+                            {% if poster.user_id == current_user.id or (current_user.is_admin_role and not owner_is_admin) %}
+                                <form method="post" action="{{ url_for('posters.delete', poster_id=poster.id) }}" data-confirm="Delete this poster?">
+                                    {{ csrf_field() }}
+                                    <button class="button danger" type="submit">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No matching posters.</div>
+    {% endif %}
+</section>
+{% endblock %}

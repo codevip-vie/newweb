@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Feature Overview - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell">
+    <div class="page-title-row">
+        <div>
+            <p class="eyebrow">Workspace</p>
+            <h1>Feature overview</h1>
+        </div>
+    </div>
+
+    <div class="feature-grid">
+        <article class="feature-card">
+            <div class="feature-card-header">
+                <span>Tasks</span>
+                <strong>Notion-style task manager</strong>
+            </div>
+            <p>Manage tasks, track progress, and organize work with sections.</p>
+            <a class="button secondary" href="{{ url_for('features.todo') }}">Open Tasks</a>
+        </article>
+        <article class="feature-card">
+            <div class="feature-card-header">
+                <span>Schedule</span>
+                <strong>Timetable planner</strong>
+            </div>
+            <p>Create weekly schedules, color-code activities, and set reminders.</p>
+            <a class="button secondary" href="{{ url_for('features.timetable') }}">Open Schedule</a>
+        </article>
+        <article class="feature-card">
+            <div class="feature-card-header">
+                <span>Tasks</span>
+                <strong>Notion-style task manager</strong>
+            </div>
+            <p>Manage tasks, track progress, and organize work with sections.</p>
+            <a class="button secondary" href="{{ url_for('features.todo') }}">Open Tasks</a>
+        </article>
+        <article class="feature-card">
+            <div class="feature-card-header">
+                <span>Schedule</span>
+                <strong>Timetable planner</strong>
+            </div>
+            <p>Create weekly schedules, color-code activities, and set reminders.</p>
+            <a class="button secondary" href="{{ url_for('features.timetable') }}">Open Schedule</a>
+        </article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field, error_list %}
+
+{% block title %}Friends - {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-shell feature-page">
+    <div class="page-title-row">
+        <div>
+            <span class="eyebrow">Friends</span>
+            <h1>Social connections</h1>
+            <p>Search users, send requests, and manage your friendships in a focused sidebar workspace.</p>
+        </div>
+    </div>
+
+    {{ error_list(errors) }}
+
+    <div class="conversation-shell friends-shell">
+        <aside class="sidebar-panel friend-sidebar">
+            <form class="search-form" method="get" action="{{ url_for('features.friends') }}">
+                <label for="search-user">Search users</label>
+                <div class="search-row">
+                    <input id="search-user" name="q" type="search" placeholder="Search by username or email" value="{{ query_text }}">
+                    <button class="button primary" type="submit">Search</button>
+                </div>
+            </form>
+
+            <div class="sidebar-section">
+                <h2>Your friends</h2>
+                {% if friends %}
+                    <ul class="mini-list">
+                        {% for friend in friends %}
+                            <li>{{ friend.username }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">No friends yet. Search to connect.</div>
+                {% endif %}
+            </div>
+
+            <div class="sidebar-section">
+                <h2>Incoming requests</h2>
+                {% if incoming_requests %}
+                    {% for request_item in incoming_requests %}
+                        <div class="request-card">
+                            <div>
+                                <strong>{{ request_item.sender.username }}</strong>
+                                <span>sent a request</span>
+                            </div>
+                            <div class="request-actions">
+                                <form method="post" action="{{ url_for('features.friends') }}">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="action" value="accept_request">
+                                    <input type="hidden" name="target_id" value="{{ request_item.sender_id }}">
+                                    <button class="button primary" type="submit">Accept</button>
+                                </form>
+                                <form method="post" action="{{ url_for('features.friends') }}">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="action" value="decline_request">
+                                    <input type="hidden" name="target_id" value="{{ request_item.sender_id }}">
+                                    <button class="button secondary" type="submit">Decline</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No pending requests.</div>
+                {% endif %}
+            </div>
+
+            <div class="sidebar-section">
+                <h2>Outgoing requests</h2>
+                {% if outgoing_requests %}
+                    {% for request_item in outgoing_requests %}
+                        <div class="request-card">
+                            <div>
+                                <strong>{{ request_item.receiver.username }}</strong>
+                                <span>request pending</span>
+                            </div>
+                            <form method="post" action="{{ url_for('features.friends') }}">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="action" value="cancel_request">
+                                <input type="hidden" name="target_id" value="{{ request_item.receiver_id }}">
+                                <button class="button secondary" type="submit">Cancel</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No outgoing requests.</div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <section class="feature-panel friends-panel">
+            <div class="panel-header">
+                <h2>Search results</h2>
+                <p>Find other members and invite them to connect.</p>
+            </div>
+
+            {% if query_text and search_results %}
+                <div class="search-results">
+                    {% for user in search_results %}
+                        <article class="result-card">
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                <span>{{ user.email }}</span>
+                            </div>
+                            <div class="result-actions">
+                                {% set is_friend = false %}
+                                {% for friend in friends %}
+                                    {% if friend.id == user.id %}
+                                        {% set is_friend = true %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if is_friend %}
+                                    <span class="status-pill">Friend</span>
+                                {% else %}
+                                    {% set outgoing = false %}
+                                    {% for request_item in outgoing_requests %}
+                                        {% if request_item.receiver_id == user.id %}
+                                            {% set outgoing = true %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if outgoing %}
+                                        <form method="post" action="{{ url_for('features.friends') }}">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="action" value="cancel_request">
+                                            <input type="hidden" name="target_id" value="{{ user.id }}">
+                                            <button class="button secondary" type="submit">Cancel request</button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post" action="{{ url_for('features.friends') }}">
+                                            {{ csrf_field() }}
+                                            <input type="hidden" name="action" value="send_request">
+                                            <input type="hidden" name="target_id" value="{{ user.id }}">
+                                            <button class="button primary" type="submit">Send request</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% elif query_text %}
+                <div class="empty-state">No users matched your search.</div>
+            {% else %}
+                <div class="empty-state">Search for users to begin building your friend list.</div>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}
