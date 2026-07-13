@@ -490,20 +490,35 @@ class BackupManager:
     def _validate_sqlite(self, database_path: Path, require_tables: bool = False) -> bool:
         try:
             if not database_path.exists() or database_path.stat().st_size == 0:
+                self._log("SQLite validation failed: file missing or empty: %s", database_path)
                 return False
             conn = sqlite3.connect(database_path)
             cursor = conn.execute("PRAGMA integrity_check;")
             result = cursor.fetchone()
             if result is None or result[0] != "ok":
+                self._log(
+                    "SQLite validation failed: integrity_check returned %s for %s",
+                    result,
+                    database_path,
+                )
                 conn.close()
                 return False
             if require_tables:
                 tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
                 conn.close()
-                return REQUIRED_TABLES.issubset(tables)
+                missing = REQUIRED_TABLES - tables
+                if missing:
+                    self._log(
+                        "SQLite validation failed: missing required tables %s in %s",
+                        missing,
+                        database_path,
+                    )
+                    return False
+                return True
             conn.close()
             return True
-        except Exception:
+        except Exception as exc:
+            self._log("SQLite validation error for %s: %s", database_path, exc)
             return False
 
     def mark_dirty(self) -> None:
