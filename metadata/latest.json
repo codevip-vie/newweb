@@ -1,13 +1,13 @@
 {
   "database_uuid": "f1fd192b635b474088a4beb18e262ebd",
-  "database_generation": 14,
-  "backup_file_id": "1mz6DmYNQFhQS1xJGg0DF4zV19fFyPrSh",
-  "backup_filename": "movie_manager_14_20260713_171119.sqlite3",
-  "sha256": "624e3cdf37efc6b50e97b0cc5448b60af2ff49a12c44d53f89e16a35a57969c9",
+  "database_generation": 17,
+  "backup_file_id": "1_GlFUMVAMHfluiGtK0ex1JWi0DAAjgWl",
+  "backup_filename": "movie_manager_17_20260713_180740.sqlite3",
+  "sha256": "a5de6299cc14e082d345442b17f5f4af8e5dd10cc59acf12c9d5f5f43a184955",
   "schema_version": 1,
   "application_version": "1.0.0",
-  "backup_created_at": "2026-07-13T17:11:24Z",
+  "backup_created_at": "2026-07-13T18:07:44Z",
   "device_id": "adc19faefd8340b5bbdb68ff688efc11",
   "environment_type": "local-development",
-  "database_size": 200704
+  "database_size": 204800
 }
