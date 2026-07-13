@@ -340,7 +340,24 @@ class BackupManager:
                 else:
                     self._log("No local database found; restoring latest cloud backup.")
 
-                self._restore_backup(latest_metadata, ids)
+                try:
+                    self._restore_backup(latest_metadata, ids)
+                except RuntimeError as exc:
+                    self._log("Restore failed using latest metadata: %s", exc)
+                    if "Downloaded backup file is not a valid SQLite database." in str(exc) or "SHA256 mismatch" in str(exc):
+                        self._log("Attempting recovery from other backup files because latest cloud backup appears invalid.")
+                        recovered_metadata = self._recover_latest_metadata(ids["database_folder_id"])
+                        if recovered_metadata is not None:
+                            self._log(
+                                "Found recoverable backup file %s from Drive.",
+                                recovered_metadata.get("backup_filename"),
+                            )
+                            self._restore_backup(recovered_metadata, ids)
+                        else:
+                            raise
+                    else:
+                        raise
+
                 self._set_status("restore", "success", "Restore completed from the latest backup.")
                 self._log("Restore completed.")
                 return True
