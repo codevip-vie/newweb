@@ -380,34 +380,55 @@ class BackupManager:
             parsed["size"] = int(file.get("size", 0)) if file.get("size") is not None else 0
             candidates.append(parsed)
         if not candidates:
+            self._log("Recover metadata: no backup candidates found in Drive folder %s", database_folder_id)
             return None
         candidates.sort(key=lambda entry: (entry.get("generation", 0), entry.get("backup_created_at", "")), reverse=True)
         for candidate in candidates:
             temp_path = self.backup_temp_dir / f"recover_{candidate['backup_name']}"
+            self._log(
+                "Recover metadata: trying candidate %s id=%s size=%s",
+                candidate["backup_name"],
+                candidate["id"],
+                candidate["size"],
+            )
             try:
                 _ensure_directory(temp_path.parent)
                 google_drive.download_file(self.account0, candidate["id"], temp_path)
+                if not self._validate_sqlite(temp_path, require_tables=False):
+                    self._log("Recover metadata: candidate %s is not a valid SQLite file.", candidate["backup_name"])
+                    continue
                 sql_metadata = self._read_sqlite_metadata(temp_path)
-                if sql_metadata and int(sql_metadata.get("generation", 0)) == int(candidate["generation"]):
-                    recovered = {
-                        "backup_file_id": candidate["id"],
-                        "backup_filename": candidate["backup_name"],
-                        "database_generation": int(sql_metadata.get("generation", 0)),
-                        "database_uuid": sql_metadata.get("database_uuid", self.database_uuid),
-                        "sha256": self._hash_file(temp_path) or "",
-                        "schema_version": sql_metadata.get("schema_version", SCHEMA_VERSION),
-                        "application_version": sql_metadata.get("application_version", APPLICATION_VERSION),
-                        "backup_created_at": sql_metadata.get("backup_created_at", candidate.get("backup_created_at", _utc_iso())),
-                        "device_id": self.device_id,
-                        "environment_type": self.environment_type,
-                        "database_size": temp_path.stat().st_size,
-                    }
-                    self._log(f"Recovered latest metadata from backup file {candidate['backup_name']}")
-                    return recovered
-            except Exception:
-                pass
+                if not sql_metadata:
+                    self._log("Recover metadata: candidate %s has no backup_metadata table.", candidate["backup_name"])
+                    continue
+                if int(sql_metadata.get("generation", 0)) != int(candidate["generation"]):
+                    self._log(
+                        "Recover metadata: candidate %s generation mismatch (file=%s, metadata=%s).",
+                        candidate["backup_name"],
+                        candidate["generation"],
+                        sql_metadata.get("generation", 0),
+                    )
+                    continue
+                recovered = {
+                    "backup_file_id": candidate["id"],
+                    "backup_filename": candidate["backup_name"],
+                    "database_generation": int(sql_metadata.get("generation", 0)),
+                    "database_uuid": sql_metadata.get("database_uuid", self.database_uuid),
+                    "sha256": self._hash_file(temp_path) or "",
+                    "schema_version": sql_metadata.get("schema_version", SCHEMA_VERSION),
+                    "application_version": sql_metadata.get("application_version", APPLICATION_VERSION),
+                    "backup_created_at": sql_metadata.get("backup_created_at", candidate.get("backup_created_at", _utc_iso())),
+                    "device_id": self.device_id,
+                    "environment_type": self.environment_type,
+                    "database_size": temp_path.stat().st_size,
+                }
+                self._log("Recovered latest metadata from backup file %s", candidate["backup_name"])
+                return recovered
+            except Exception as exc:
+                self._log("Recover metadata: failed to process candidate %s: %s", candidate["backup_name"], exc)
             finally:
                 temp_path.unlink(missing_ok=True)
+        self._log("Recover metadata: no valid backup candidate found in Drive folder %s", database_folder_id)
         return None
 
     def _load_remote_latest(self, metadata_folder_id: str) -> dict[str, Any] | None:
@@ -424,12 +445,23 @@ class BackupManager:
         return None
 
     def _find_metadata_file_id(self, name: str, folder_id: str) -> str | None:
-        return google_drive.search_file_id_by_name(
+        file_id = google_drive.search_file_id_by_name(
             self.account0,
             name,
             folder_id=folder_id,
             mime_type_prefix="application/json",
         )
+        if not file_id:
+            self._log(
+                "Metadata file %s not found with mime type filter; retrying without mime filter.",
+                name,
+            )
+            file_id = google_drive.search_file_id_by_name(
+                self.account0,
+                name,
+                folder_id=folder_id,
+            )
+        return file_id
 
     def _restore_backup(self, latest_metadata: dict[str, Any], ids: dict[str, str]) -> None:
         database_folder_id = ids["database_folder_id"]
@@ -439,13 +471,21 @@ class BackupManager:
             raise RuntimeError("Restore metadata does not include a backup file ID.")
         temp_restore_path = self.backup_temp_dir / f"restore_{latest_metadata.get('backup_filename', _utc_timestamp())}.sqlite3"
         _ensure_directory(temp_restore_path.parent)
+        self._log("Restore backup: downloading backup file id=%s name=%s", file_id, latest_metadata.get("backup_filename"))
         google_drive.download_file(self.account0, file_id, temp_restore_path)
+        self._log("Restore backup: downloaded file size=%s", temp_restore_path.stat().st_size)
         if latest_metadata.get("sha256"):
             actual_sha256 = self._hash_file(temp_restore_path)
+            self._log(
+                "Restore backup: downloaded sha256=%s expected=%s",
+                actual_sha256,
+                latest_metadata.get("sha256"),
+            )
             if actual_sha256 != latest_metadata.get("sha256"):
                 temp_restore_path.unlink(missing_ok=True)
                 raise RuntimeError("Downloaded backup file SHA256 mismatch.")
         if not self._validate_sqlite(temp_restore_path, require_tables=True):
+            self._log("Restore backup: downloaded file validation failed for %s", temp_restore_path)
             temp_restore_path.unlink(missing_ok=True)
             raise RuntimeError("Downloaded backup file is not a valid SQLite database.")
 
