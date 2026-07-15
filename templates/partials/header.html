@@ -41,8 +41,8 @@
         {% if not current_user.is_authenticated %}
             <div class="header-actions">
                 <a class="button secondary" href="{{ url_for('auth.login') }}">Log in</a>
-                <a class="button secondary" href="https://web-production-85f3.up.railway.app" target="_blank" rel="noopener noreferrer">Truyện</a>
                 <a class="button primary" href="{{ url_for('auth.register') }}">Register</a>
+                <a class="button secondary" href="https://web-production-85f3.up.railway.app" target="_blank" rel="noopener noreferrer">Truyện</a>
             </div>
         {% endif %}
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">🌗</button>
