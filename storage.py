@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass
 class StorageAccount:
     index: int
     service_account: str | None

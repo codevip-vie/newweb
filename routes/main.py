@@ -196,7 +196,10 @@ def google_drive_oauth_authorize():
 
     account = storage_manager._accounts[account_index]
 
-    redirect_uri = url_for("main.google_drive_oauth_callback", _external=True)
+    redirect_uri = google_drive.resolve_redirect_uri(
+        account=account,
+        fallback_uri=url_for("main.google_drive_oauth_callback", _external=True),
+    )
     try:
         authorization_url = google_drive.get_oauth_authorization_url(
             redirect_uri, state=str(account_index), account=account
@@ -242,7 +245,10 @@ def google_drive_oauth_callback():
 
     account = storage_manager._accounts[account_index]
 
-    redirect_uri = url_for("main.google_drive_oauth_callback", _external=True)
+    redirect_uri = google_drive.resolve_redirect_uri(
+        account=account,
+        fallback_uri=url_for("main.google_drive_oauth_callback", _external=True),
+    )
     try:
         google_drive.exchange_authorization_code(code, redirect_uri, account=account)
     except google_drive.DriveError as exc:

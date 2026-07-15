@@ -85,14 +85,15 @@ def _derive_account_token_file_path(path: Path, index: int) -> Path:
 
 
 def _load_refresh_token(account: object | None = None) -> str | None:
+    if account is not None and getattr(account, "index", 0) is not None:
+        account_env_name = _account_env_name("GOOGLE_OAUTH_REFRESH_TOKEN", account.index)
+        refresh_token = os.environ.get(account_env_name)
+        if refresh_token:
+            return refresh_token.strip()
+
     refresh_token = getattr(account, "oauth_refresh_token", None) if account is not None else None
     if refresh_token:
         return refresh_token.strip()
-
-    if account is not None and getattr(account, "index", 0) is not None:
-        refresh_token = os.environ.get(_account_env_name("GOOGLE_OAUTH_REFRESH_TOKEN", account.index))
-        if refresh_token:
-            return refresh_token.strip()
 
     refresh_token = os.environ.get("GOOGLE_OAUTH_REFRESH_TOKEN")
     if refresh_token:
@@ -126,6 +127,26 @@ def save_refresh_token(refresh_token: str, account: object | None = None) -> Non
         _write_dotenv_variable(env_key, refresh_token)
     except Exception:
         logger.exception("Unable to persist OAuth refresh token to .env file")
+
+    if account is not None:
+        try:
+            setattr(account, "oauth_refresh_token", refresh_token)
+        except Exception:
+            pass
+
+
+def resolve_redirect_uri(account: object | None = None, fallback_uri: str | None = None) -> str | None:
+    if account is not None and getattr(account, "index", 0) is not None:
+        env_key = _account_env_name("GOOGLE_OAUTH_REDIRECT_URI", account.index)
+        env_value = os.environ.get(env_key)
+        if env_value:
+            return env_value.strip()
+
+    env_value = os.environ.get("GOOGLE_OAUTH_REDIRECT_URI")
+    if env_value:
+        return env_value.strip()
+
+    return fallback_uri
 
 
 def _delete_stored_refresh_token(account: object | None = None) -> None:
