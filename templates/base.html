@@ -17,6 +17,7 @@
                 <aside class="site-sidebar is-collapsed" aria-label="App navigation">
                     <nav class="sidebar-nav">
                         <a href="{{ url_for('main.home') }}" class="{% if request.endpoint == 'main.home' %}active{% endif %}">Home</a>
+                        <a href="https://web-production-85f3.up.railway.app" target="_blank" rel="noopener noreferrer">Truyện</a>
                         <a href="{{ url_for('posters.index') }}" class="{% if request.endpoint == 'posters.index' %}active{% endif %}">Posters</a>
                         <a href="{{ url_for('movies.index') }}" class="{% if request.endpoint == 'movies.index' %}active{% endif %}">Movies</a>
                         {% if current_user.is_admin_role %}

@@ -19,6 +19,7 @@
         </button>
         <nav class="site-nav" id="site-nav" data-site-nav>
             <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="https://web-production-85f3.up.railway.app" target="_blank" rel="noopener noreferrer">Truyện</a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
                 <a href="{{ url_for('posters.index') }}">Posters</a>

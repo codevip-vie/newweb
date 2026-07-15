@@ -16,7 +16,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.home"))
 
     values = {"username": "", "email": ""}
     errors: list[str] = []
@@ -80,7 +80,7 @@ def register():
                 session.permanent = True
                 login_user(user)
                 flash("Your account is ready.", "success")
-                return redirect(url_for("main.dashboard"))
+                return redirect(url_for("main.home"))
 
     return render_template("auth/register.html", errors=errors, values=values)
 
@@ -88,7 +88,7 @@ def register():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("main.home"))
 
     values = {"identifier": ""}
     errors: list[str] = []
@@ -123,7 +123,7 @@ def login():
             login_user(user)
             flash("Welcome back.", "success")
             next_url = request.form.get("next") or request.args.get("next")
-            return redirect(next_url if is_safe_redirect(next_url) else url_for("main.dashboard"))
+            return redirect(next_url if is_safe_redirect(next_url) else url_for("main.home"))
 
     return render_template(
         "auth/login.html",
